@@ -1,0 +1,6 @@
+---
+- name: install and start httpd
+  hosts: nodes
+  roles:
+  - httpd
+  - firewalld
