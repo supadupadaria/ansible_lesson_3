@@ -1,0 +1,5 @@
+---
+- name: install vsftpd and grant access to anon users
+  hosts: nodes
+  roles:
+  - vsftpd

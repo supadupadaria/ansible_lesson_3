@@ -1,0 +1,66 @@
+---
+- name: install vsftpd and firewalld package
+  yum:
+    name:
+    - vsftpd
+    - firewalld
+    - python3-libselinux
+    - python3-libsemanage
+    state: present
+
+- name: start and enable vsftpd service
+  service: 
+    name: vsftpd
+    state: started
+    enabled: true
+
+- name: set vsftpd configuration
+  template:
+    src: templates/vsftpd.conf.j2
+    dest: /etc/vsftpd/vsftpd.conf
+    owner: root
+    group: root
+    mode: '0600'
+    backup: yes
+  notify: restart vsftpd
+
+- name: create /var/ftp/pub and grant anonymous user access
+  file:
+    path: /var/ftp/pub
+    state: directory
+    mode: '0777'
+    owner: "ftp"
+    group: "ftp"
+    setype: "public_content_t"
+    seuser: "system_u"
+
+- name: create /var/ftp/pub/upload and grant anonymous user access to add files
+  file:
+    path: /var/ftp/pub/upload
+    state: directory
+    mode: '0777'
+    owner: "ftp"
+    group: "ftp"
+    setype: "public_content_rw_t"
+    seuser: "system_u"
+
+- name: set selinux boolean ftpd_anon_write to yes
+  seboolean:
+    name: ftpd_anon_write
+    persistent: yes
+    state: yes
+  notify: restart vsftpd
+
+- name: enable firewalld service
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: open port in firewall for FTP
+  firewalld:
+    service: ftp
+    permanent: true
+    state: enabled
+    immediate: yes
+  notify: restart vsftpd
